@@ -16,27 +16,59 @@ export const setupMCPServer = (): McpServer => {
     { capabilities: { logging: {} } }
   );
 
-  // Register a prompt template that allows the server to
-  // provide the context structure and (optionally) the variables
-  // that should be placed inside of the prompt for client to fill in.
+  // Register a prompt template for showing products
   server.prompt(
-    "greeting-template",
-    "A simple greeting prompt template",
-    {
-      name: z.string().describe("Name to include in greeting"),
-    },
-    async ({ name }): Promise<GetPromptResult> => {
+    "show-products",
+    "Show all available products",
+    {},
+    async (): Promise<GetPromptResult> => {
       return {
         messages: [
           {
             role: "user",
             content: {
               type: "text",
-              text: `Please greet ${name} in a friendly manner.`,
+              text: "Show me all available products",
             },
           },
         ],
+        tool: "get-products",
+        arguments: {},
       };
+    }
+  );
+
+  // Register a tool to fetch products
+  server.tool(
+    "get-products",
+    "Get all products from the store",
+    {},
+    async (): Promise<CallToolResult> => {
+      try {
+        const response = await fetch('https://fakestoreapi.com/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        const products = await response.json();
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(products, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error fetching products: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -88,49 +120,6 @@ export const setupMCPServer = (): McpServer => {
           },
         ],
       };
-    }
-  );
-
-  // Register a tool to fetch products from Fake Store API
-  server.tool(
-    "fetch-products",
-    "Fetches products from Shopping Store API",
-    {
-      limit: z
-        .number()
-        .describe("Number of products to fetch (0 for all)")
-        .default(0),
-    },
-    async ({ limit }): Promise<CallToolResult> => {
-      try {
-        const response = await fetch('https://fakestoreapi.com/products');
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-        let products = await response.json();
-        
-        if (limit > 0) {
-          products = products.slice(0, limit);
-        }
-
-        return {
-          content: [
-            {
-              type: "json",
-              json: products,
-            },
-          ],
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error fetching products: ${error.message}`,
-            },
-          ],
-        };
-      }
     }
   );
 
