@@ -5,7 +5,7 @@ import {
   GetPromptResult,
   ReadResourceResult,
 } from "@modelcontextprotocol/sdk/types.js";
-
+import fetch from "node-fetch";
 
 export const setupMCPServer = (): McpServer => {
 
@@ -89,6 +89,49 @@ export const setupMCPServer = (): McpServer => {
           },
         ],
       };
+    }
+  );
+
+  // Register a tool to fetch products from Fake Store API
+  server.tool(
+    "fetch-products",
+    "Fetches products from Shopping Store API",
+    {
+      limit: z
+        .number()
+        .describe("Number of products to fetch (0 for all)")
+        .default(0),
+    },
+    async ({ limit }): Promise<CallToolResult> => {
+      try {
+        const response = await fetch('https://fakestoreapi.com/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        let products = await response.json();
+        
+        if (limit > 0) {
+          products = products.slice(0, limit);
+        }
+
+        return {
+          content: [
+            {
+              type: "json",
+              json: products,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error fetching products: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
