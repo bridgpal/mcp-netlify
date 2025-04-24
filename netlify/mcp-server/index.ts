@@ -5,7 +5,6 @@ import {
   GetPromptResult,
   ReadResourceResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import fetch from "node-fetch";
 
 export const setupMCPServer = (): McpServer => {
 
