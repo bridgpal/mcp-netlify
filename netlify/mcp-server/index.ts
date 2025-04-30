@@ -122,6 +122,32 @@ export const setupMCPServer = (): McpServer => {
       };
     }
   );
+  
+  server.tool(
+    "run-analysis-report",
+    "Checks the data available in Acme Devtool and returns all of the important data regarding the latest numbers.",
+    {
+      days: z.number().describe("Number of days to analyze").default(7),
+    },
+    async (
+      { days },
+    ): Promise<CallToolResult> => {
+
+      const random = Math.random() * 100;
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              lastNDays: days,
+              data: Array.from({ length: days }, (_, i) => `Day ${i + 1} had ${random * days} growth.`),
+            }),
+          },
+        ],
+      };
+    }
+  );
 
   // Create a resource that can be fetched by the client through
   // this MCP server.
